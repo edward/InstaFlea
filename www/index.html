@@ -48,6 +48,8 @@
       // Uncomment to view the base64 encoded image data
       // console.log(imageData);
 
+      alert("awesome, posting it!");
+
       // Get image handle
       //
       var smallImage = document.getElementById('smallImage');
@@ -55,6 +57,8 @@
       // Unhide image elements
       //
       smallImage.style.display = 'block';
+      smallImage.width  = 100;
+      smallimage.height = 100;
 
       // Show the captured photo
       // The inline CSS rules are used to resize the image
@@ -64,22 +68,21 @@
 
     // Called when a photo is successfully retrieved
     //
-    function onPhotoURISuccess(imageURI) {
-      // Uncomment to view the image file URI 
-      // console.log(imageURI);
+    function onPhotoURISuccess(imageData) {
 
-      // Get image handle
-      //
-      var largeImage = document.getElementById('largeImage');
-
-      // Unhide image elements
-      //
-      largeImage.style.display = 'block';
-
-      // Show the captured photo
-      // The inline CSS rules are used to resize the image
-      //
-      largeImage.src = imageURI;
+      var xmlPayload = '<?xml version="1.0" encoding="UTF-8" ?><image><attachment>' + imageData + '</attachment><filename>stuff.jpg</filename></image>';
+      
+      $.ajax({
+        url: 'http://iliketurtles.myshopify.com/admin/products/6535652/images.xml',
+        type: 'POST',
+        username: '7ea7a2ff231a9f7d4be696837482e55f',
+        password: '95c5e8091839609c824128d2a8197b9a',
+        data: xmlPayload,
+        contentType: 'application/xml',
+        dataType: 'xml',
+        success: function() { alert('win'); },
+        error: function(textStatus, errorThrown) { alert(textStatus); alert(errorThrown); }
+      });
     }
 
     // A button will call this function
@@ -100,9 +103,7 @@
     //
     function getPhoto(source) {
       // Retrieve image file location from specified source
-      navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50, 
-        destinationType: destinationType.FILE_URI,
-        sourceType: source });
+      navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50, sourceType: source });
     }
 
     // Called if something bad happens.
