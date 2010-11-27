@@ -10,6 +10,10 @@
     <script src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
     <!-- <script src="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script> -->
     
+    <style type="text/css">
+    img.published { display:none; }
+    </style>
+    
     <script type="text/javascript" charset="utf-8">
 
     var pictureSource;   // picture source
@@ -33,25 +37,35 @@
     // Called when a photo is successfully retrieved
     //
     function onPhotoAdded(imageData) {
-      picturesOfStuff.push(imageData);
+      picturesOfStuff.push({data: imageData, published: false});
       renderStuff();
     }
     
     function renderStuff() {
-      $('#stuff').html('');
-      for (var i = picturesOfStuff.length - 1; i >= 0; i--){
-        $('#stuff').append('<img src="data:image/jpeg;base64,' + picturesOfStuff[i] + '" width=75 height=75 style="margin: 4px"/>');
-      };
+      $('#stuff').empty();
+      
+      for (var i in picturesOfStuff) {
+        if (picturesOfStuff[i].published) {
+          $('#stuff').append('<img class="published" src="data:image/jpeg;base64,' + picturesOfStuff[i].data + '" width=75 height=75 style="margin: 4px"/>');
+        } else {
+          $('#stuff').append('<img src="data:image/jpeg;base64,' + picturesOfStuff[i].data + '" width=75 height=75 style="margin: 4px"/>');
+        }
+      }
     }
     
-    function publish() {
+    function publishStuff() {
       for (var i in picturesOfStuff) {
         sendPictureToShopify(picturesOfStuff[i]);
       }
     }
     
-    function sendPictureToShopify(imageData) {
-      var xmlPayload = '<?xml version="1.0" encoding="UTF-8" ?><product><product-type>Garage sale</product-type><vendor>us</vendor><title>Awesome product</title><images type="array"><image><attachment>' + imageData + '</attachment><filename>stuff_' + Math.random() + '.jpg</filename></image></images></product>';
+    function clearStuff() {
+      picturesOfStuff = [];
+      renderStuff();
+    }
+    
+    function sendPictureToShopify(image) {
+      var xmlPayload = '<?xml version="1.0" encoding="UTF-8" ?><product><product-type>Garage sale</product-type><vendor>us</vendor><title>Awesome product</title><images type="array"><image><attachment>' + image.data + '</attachment><filename>stuff_' + Math.random() + '.jpg</filename></image></images></product>';
       $.ajax({
         url: 'http://iliketurtles.myshopify.com/admin/products.xml',
         type: 'POST',
@@ -61,7 +75,8 @@
         contentType: 'application/xml',
         dataType: 'xml',
         success: function() { 
-          alert('win'); 
+          image.published = true;
+          renderStuff();
         },
         error: function(xmlHttpRequest, errorThrown) { alert(xmlHttpRequest.responseText); }
       });
@@ -97,6 +112,7 @@
     <hr />
     <div id="stuff"></div>
     <hr />
-    <button onclick="publish();">Publish</button>
+    <button onclick="publishStuff();">Publish</button>
+    <button onclick="clearStuff();">Clear</button>
   </body>
 </html>
