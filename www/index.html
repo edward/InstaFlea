@@ -14,6 +14,8 @@
 
     var pictureSource;   // picture source
     var destinationType; // sets the format of returned value 
+    
+    var picturesOfStuff = [];
 
     // Wait for PhoneGap to connect with the device
     //
@@ -26,62 +28,42 @@
     function onDeviceReady() {
         pictureSource=navigator.camera.PictureSourceType;
         destinationType=navigator.camera.DestinationType;
-        
-        shopifyApiUrl = "http://7ea7a2ff231a9f7d4be696837482e55f:95c5e8091839609c824128d2a8197b9a@iliketurtles.myshopify.com/admin/"
-        
-        jQuery.ajax({
-          // url: "http://edwardog.net/movember.html",
-          // url: "http://google.ca",
-          url: shopifyApiUrl + 'shop.xml',
-          cache: false,
-          success: function(xml){
-            shopName = $(xml).find("shop name").text();
-            $("#results").append(shopName);
-            window.localStorage['ohaidar'] = shopName;
-          }
-        });
     }
 
     // Called when a photo is successfully retrieved
     //
-    function onPhotoDataSuccess(imageData) {
-      // Uncomment to view the base64 encoded image data
-      // console.log(imageData);
-
-      alert("awesome, posting it!");
-
-      // Get image handle
-      //
-      var smallImage = document.getElementById('smallImage');
-
-      // Unhide image elements
-      //
-      smallImage.style.display = 'block';
-      smallImage.width  = 100;
-      smallimage.height = 100;
-
-      // Show the captured photo
-      // The inline CSS rules are used to resize the image
-      //
-      smallImage.src = "data:image/jpeg;base64," + imageData;
+    function onPhotoAdded(imageData) {
+      picturesOfStuff.push(imageData);
+      renderStuff();
     }
-
-    // Called when a photo is successfully retrieved
-    //
-    function onPhotoURISuccess(imageData) {
-
-      var xmlPayload = '<?xml version="1.0" encoding="UTF-8" ?><image><attachment>' + imageData + '</attachment><filename>stuff.jpg</filename></image>';
-      
+    
+    function renderStuff() {
+      $('#stuff').html('');
+      for (var i = picturesOfStuff.length - 1; i >= 0; i--){
+        $('#stuff').append('<img src="data:image/jpeg;base64,' + picturesOfStuff[i] + '" width=75 height=75 style="margin: 4px"/>');
+      };
+    }
+    
+    function publish() {
+      for (var i in picturesOfStuff) {
+        sendPictureToShopify(picturesOfStuff[i]);
+      }
+    }
+    
+    function sendPictureToShopify(imageData) {
+      var xmlPayload = '<?xml version="1.0" encoding="UTF-8" ?><product><product-type>Garage sale</product-type><vendor>us</vendor><title>Awesome product</title><images type="array"><image><attachment>' + imageData + '</attachment><filename>stuff_' + Math.random() + '.jpg</filename></image></images></product>';
       $.ajax({
-        url: 'http://iliketurtles.myshopify.com/admin/products/6535652/images.xml',
+        url: 'http://iliketurtles.myshopify.com/admin/products.xml',
         type: 'POST',
         username: '7ea7a2ff231a9f7d4be696837482e55f',
         password: '95c5e8091839609c824128d2a8197b9a',
         data: xmlPayload,
         contentType: 'application/xml',
         dataType: 'xml',
-        success: function() { alert('win'); },
-        error: function(textStatus, errorThrown) { alert(textStatus); alert(errorThrown); }
+        success: function() { 
+          alert('win'); 
+        },
+        error: function(xmlHttpRequest, errorThrown) { alert(xmlHttpRequest.responseText); }
       });
     }
 
@@ -89,21 +71,14 @@
     //
     function capturePhoto() {
       // Take picture using device camera and retrieve image as base64-encoded string
-      navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 50 });
-    }
-
-    // A button will call this function
-    //
-    function capturePhotoEdit() {
-      // Take picture using device camera, allow edit, and retrieve image as base64-encoded string  
-      navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 20, allowEdit: true }); 
+      navigator.camera.getPicture(onPhotoAdded, onFail, { quality: 50 });
     }
 
     // A button will call this function
     //
     function getPhoto(source) {
       // Retrieve image file location from specified source
-      navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50, sourceType: source });
+      navigator.camera.getPicture(onPhotoAdded, onFail, { quality: 50, sourceType: source });
     }
 
     // Called if something bad happens.
@@ -116,20 +91,12 @@
   </head>
   <body onload="onLoad()">
     <button onclick="capturePhoto();">Capture Photo</button> <br>
-    <button onclick="capturePhotoEdit();">Capture Editable Photo</button> <br>
     <button onclick="getPhoto(pictureSource.PHOTOLIBRARY);">From Photo Library</button><br>
-    <button onclick="getPhoto(pictureSource.SAVEDPHOTOALBUM);">From Photo Album</button><br>
-    <img style="display:none;width:60px;height:60px;" id="smallImage" src="" />
-    <img style="display:none;" id="largeImage" src="" />
-    
-    <script type="text/javascript" charset="utf-8">
-      // alert(window.localStorage['ohaidar']);
-    </script>
-    
-    Stuff?
-    
+
+    Your stuff:
     <hr />
-    
-    <div id="results"></div>
+    <div id="stuff"></div>
+    <hr />
+    <button onclick="publish();">Publish</button>
   </body>
 </html>
